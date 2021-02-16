@@ -30,7 +30,7 @@ Si quieres **ayudarme** a continuar con mi trabajo, podes ayudarme de diferentes
 
 **33Xh8YBQsMW8LGrnRR5wgEKXNzoaE5C95Q**
 
-![Wallet 33Xh8YBQsMW8LGrnRR5wgEKXNzoaE5C95Q](archivos_soporte/btc/wallet.png)
+![Wallet 33Xh8YBQsMW8LGrnRR5wgEKXNzoaE5C95Q](wallet.png)
 
 **Muchas gracias por tu donación!**
 
