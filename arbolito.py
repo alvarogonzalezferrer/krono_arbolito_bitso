@@ -100,7 +100,9 @@ taapi_parameters = {
     'exchange': 'binance',
     'symbol': 'BTC/USDT',
     'interval': '1h'  # DEBUG TODO una hora? un minuto? por ahora una hora
-    }
+}
+
+
 # TODO DEBUG PONER MAS INDICADORES
 
 
@@ -220,6 +222,7 @@ def show_balance(api):
 
     print("** RIQUEZA TOTAL APROXIMADA USD ", wealth_usd, "| ARS", wealth_ars)
 
+
 # menu principal
 def show_menu(api):
     print("---------------------------------------")
@@ -316,7 +319,7 @@ while not opt == '0':
         # TODO DEBUG MEJORAR INDICADORES
         # TODO preguntar si quiere minuto, hora, diario, etc
         # TODO por ahora no sirven para nada
-        print ("-- Indicadores --")
+        print("-- Indicadores --")
 
         print("Intervalo:", taapi_parameters['interval'])
 
@@ -327,7 +330,7 @@ while not opt == '0':
         print("TR", requests.get("https://api.taapi.io/tr", params=taapi_parameters).json())
         print("SUPERTREND", requests.get("https://api.taapi.io/supertrend", params=taapi_parameters).json())
 
-        print ('\n\n')
+        print('\n\n')
         # TODO DEBUG DEBERIA IDENTIFICAR TENDENCIAS BAJISTAS O ALZA Y ACTUAR EN CONSECUENCIA // MUY IMPOSIBLE REALMENTE CON ALGO COMO BTC
     else:
         print("Opcion no valida!")
