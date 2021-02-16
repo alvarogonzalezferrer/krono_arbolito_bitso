@@ -96,7 +96,7 @@ sar = 0
 tr = 0
 taapi_endpoint = "https://api.taapi.io/"
 taapi_parameters = {
-    'secret': krono_bot_config.TAAPI_SECRET,
+    'secret': TAAPI_SECRET,
     'exchange': 'binance',
     'symbol': 'BTC/USDT',
     'interval': '1h'  # DEBUG TODO una hora? un minuto? por ahora una hora
@@ -264,7 +264,7 @@ def show_menu(api):
 # arrancar la api de bitso con las keys secretas
 api = None
 try:
-    api = bitso.Api(krono_bot_config.BITSO_API_KEY, krono_bot_config.BITSO_API_SECRET)
+    api = bitso.Api(BITSO_API_KEY, BITSO_API_SECRET)
     status = api.account_status()
     print("Status cuenta:", status.status)
 except Exception as e:
