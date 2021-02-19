@@ -1,5 +1,7 @@
 # ------------------------------------------------------------
 # Arbolito digital
+#
+# v 0.19.02.2021
 # ------------------------------------------------------------
 # Permite convertir facilmente entre monedas, poner ordenes, etc
 # Sirve para el exchange Bitso
@@ -63,17 +65,11 @@ import time  # temporizaciones
 import requests  # para la api de indicadores
 
 # ----------
-# configuración de cuenta
-# PONGA AQUI SUS CLAVES 
-
-# https://bitso.com/
-BITSO_API_KEY = 'YOUR KEY'
-BITSO_API_SECRET = 'YOUR SECRET'
-
-# https://taapi.io/
-TAAPI_SECRET = 'YOUR SECRET'
+import krono_bot_config  # configuración de cuenta
 
 # -- globales
+
+VERSION = "0.19.02.2021" # TODO cambiar esta version en cada revision
 
 # balances de dinero disponible
 usd_total = 0
@@ -96,13 +92,11 @@ sar = 0
 tr = 0
 taapi_endpoint = "https://api.taapi.io/"
 taapi_parameters = {
-    'secret': TAAPI_SECRET,
+    'secret': krono_bot_config.TAAPI_SECRET,
     'exchange': 'binance',
     'symbol': 'BTC/USDT',
     'interval': '1h'  # DEBUG TODO una hora? un minuto? por ahora una hora
-}
-
-
+    }
 # TODO DEBUG PONER MAS INDICADORES
 
 
@@ -222,11 +216,10 @@ def show_balance(api):
 
     print("** RIQUEZA TOTAL APROXIMADA USD ", wealth_usd, "| ARS", wealth_ars)
 
-
 # menu principal
 def show_menu(api):
     print("---------------------------------------")
-    print("Krono Arbolito 0.0.1")
+    print("Krono Arbolito", VERSION)
     print("---------------------------------------\n")
 
     show_balance(api)
@@ -264,7 +257,7 @@ def show_menu(api):
 # arrancar la api de bitso con las keys secretas
 api = None
 try:
-    api = bitso.Api(BITSO_API_KEY, BITSO_API_SECRET)
+    api = bitso.Api(krono_bot_config.BITSO_API_KEY, krono_bot_config.BITSO_API_SECRET)
     status = api.account_status()
     print("Status cuenta:", status.status)
 except Exception as e:
@@ -319,7 +312,7 @@ while not opt == '0':
         # TODO DEBUG MEJORAR INDICADORES
         # TODO preguntar si quiere minuto, hora, diario, etc
         # TODO por ahora no sirven para nada
-        print("-- Indicadores --")
+        print ("-- Indicadores --")
 
         print("Intervalo:", taapi_parameters['interval'])
 
@@ -330,7 +323,8 @@ while not opt == '0':
         print("TR", requests.get("https://api.taapi.io/tr", params=taapi_parameters).json())
         print("SUPERTREND", requests.get("https://api.taapi.io/supertrend", params=taapi_parameters).json())
 
-        print('\n\n')
+        print ('\n\n')
+
         # TODO DEBUG DEBERIA IDENTIFICAR TENDENCIAS BAJISTAS O ALZA Y ACTUAR EN CONSECUENCIA // MUY IMPOSIBLE REALMENTE CON ALGO COMO BTC
     else:
         print("Opcion no valida!")
@@ -338,95 +332,111 @@ while not opt == '0':
     if ok_trade:
         if not cant_exchange_max == 0:
             print("Tenes un maximo de ", cant_exchange_max)
-            print("Que porcentaje queres cambiar? 10% ? 25% ? 100% ?")
-            porcentaje = int(input("% ?").strip().lower())
 
-            if porcentaje < 1:
-                print("Error, no puede ser tan bajo. %", porcentaje)
+            print("Podes cambiar un porcentaje o una cantidad especifica.")
+
+            print("Para porcentaje, pone el numero seguido de %, para cantidad seguido de $ o nada.")
+
+            print("Ejemplo: 10 % o 25 $")
+            leer = input("Cuanto % o $ ?").strip().lower()
+
+            cantidad = 0.0
+            if leer.find("%") > 0:  # puso un porcentaje?
+                porcentaje = float(leer.replace("%", ""))
+                if porcentaje < 1:
+                    print("Error, no puede ser tan bajo. %", porcentaje)
+                    ok_trade = False
+                else:
+                    cantidad = cant_exchange_max * porcentaje / Decimal(100.0)
             else:
-                cantidad = cant_exchange_max * porcentaje / Decimal(100.0)
+                cantidad = float(leer.replace("$", ""))
 
-                if opt == '4' or opt == '5':  # hacia btc
-                    cantidad = round(cantidad, 8)
-                else:
-                    cantidad = round(cantidad, 2)
+            if opt == '4' or opt == '5':
+                cantidad = round(cantidad, 8) # hacia btc
+            else:
+                cantidad = round(cantidad, 2) # hacia fiat usd / ars
 
-                print("Cantidad a cambiar: ", cantidad)
-                s = input("Es correcto? S / N").lower().strip()[0]
-                if s == 's':
-                    # tomar ordenes altas y bajas
+            print("Cantidad a cambiar: ", cantidad)
+            s = input("Es correcto? S / N").lower().strip()[0]
+
+            cantidad = Decimal(cantidad) # conversion importante para usarlo mas abajo
+
+            if s == 's':
+                # tomar ordenes altas y bajas
+                try:
+                    ob = api.order_book(use_book)
+                except Exception as e:
+                    print("Fallo obteniendo valores de mercado.\n", e)
+                    exit(-1)
+
+                print("-- Mercados ", use_book, "--")
+                # sacar promedios
+                ask_prom = 0
+                bid_prom = 0
+                ic = 0
+
+                # zip nos da un iterator doble, se detiene en el mas corto, igual devuelve los dos del mismo
+                # tamano normalmente
+                for ask, bid in zip(ob.asks, ob.bids):
+                    ask_prom = ask_prom + ask.price
+                    bid_prom = bid_prom + bid.price
+                    ic = ic + 1
+
+                ask_prom = ask_prom / ic
+                bid_prom = bid_prom / ic
+
+                # las puntas ask están al reves, la mas barata primera
+                # guardar estos valores
+                ask_min = ob.asks[0].price
+                ask_max = ob.asks[len(ob.asks) - 1].price
+
+                bid_max = ob.bids[0].price
+                bid_min = ob.bids[len(ob.bids) - 1].price
+
+                print("Puntas ask (venta) min $ ", ask_min, "| max $", ask_max)
+                print("Puntas bid (compra) max $", bid_max, "| min $", bid_min)
+
+                print("Promedios: ask $", ask_prom, "  |  bid $", bid_prom)
+
+                # --- preparar orden
+                colocar_orden = False
+
+                if opt == '2' or opt == '3':  # ARS o USD, a BTC
+                    price = ask_min + Decimal('0.02')  # mas 2 centavo para asegurar la compra
+                    side_x = 'buy'
+                    ord_c = round(cantidad / price, 8)
+                    print("Comprar BTC $", price, " > btc ", ord_c)
+                    colocar_orden = True
+
+                if opt == '4' or opt == '5':  # BTC a fiat USD o ARS
+                    price = bid_max - Decimal('0.02')  # menos 2 centavo para asegurar la venta
+                    side_x = 'sell'
+                    ord_c = round(cantidad, 8)
+                    print("Vender BTC $", price, " > btc ", ord_c)
+                    colocar_orden = True
+
+                if colocar_orden:
                     try:
-                        ob = api.order_book(use_book)
+                        order = api.place_order(book=use_book, side=side_x, order_type='limit', major=ord_c,
+                                                price=price)
                     except Exception as e:
-                        print("Fallo obteniendo valores de mercado.\n", e)
-                        exit(-1)
+                        print("ERROR: Fallo colocar la orden de compra...\n", e)
+                    else:  # todo bien
+                        print("** Orden colocada!:", order)
 
-                    print("-- Mercados ", use_book, "--")
-                    # sacar promedios
-                    ask_prom = 0
-                    bid_prom = 0
-                    ic = 0
+                        mostrar_ordenes(api, use_book)
 
-                    # zip nos da un iterator doble, se detiene en el mas corto, igual devuelve los dos del mismo
-                    # tamano normalmente
-                    for ask, bid in zip(ob.asks, ob.bids):
-                        ask_prom = ask_prom + ask.price
-                        bid_prom = bid_prom + bid.price
-                        ic = ic + 1
-
-                    ask_prom = ask_prom / ic
-                    bid_prom = bid_prom / ic
-
-                    # las puntas ask están al reves, la mas barata primera
-                    # guardar estos valores
-                    ask_min = ob.asks[0].price
-                    ask_max = ob.asks[len(ob.asks) - 1].price
-
-                    bid_max = ob.bids[0].price
-                    bid_min = ob.bids[len(ob.bids) - 1].price
-
-                    print("Puntas ask (venta) min $ ", ask_min, "| max $", ask_max)
-                    print("Puntas bid (compra) max $", bid_max, "| min $", bid_min)
-
-                    print("Promedios: ask $", ask_prom, "  |  bid $", bid_prom)
-
-                    # --- preparar orden
-                    colocar_orden = False
-
-                    if opt == '2' or opt == '3':  # ARS o USD, a BTC
-                        price = ask_min + Decimal('0.02')  # mas 2 centavo para asegurar la compra
-                        side_x = 'buy'
-                        ord_c = round(cantidad / price, 8)
-                        print("Comprar BTC $", price, " > btc ", ord_c)
-                        colocar_orden = True
-
-                    if opt == '4' or opt == '5':  # BTC a fiat USD o ARS
-                        price = bid_max - Decimal('0.02')  # menos 2 centavo para asegurar la venta
-                        side_x = 'sell'
-                        ord_c = round(cantidad, 8)
-                        print("Vender BTC $", price, " > btc ", ord_c)
-                        colocar_orden = True
-
-                    if colocar_orden:
-                        try:
-                            order = api.place_order(book=use_book, side=side_x, order_type='limit', major=ord_c,
-                                                    price=price)
-                        except Exception as e:
-                            print("ERROR: Fallo colocar la orden de compra...\n", e)
-                        else:  # todo bien
-                            print("** Orden colocada!:", order)
-
-                            mostrar_ordenes(api, use_book)
-
-                            print("Esperando unos segundos para que se ejecute.")
-                            time.sleep(30)
-                    else:
-                        print("DEBUG - algo esta mal con la orden, no debio llegar aqui.")
-
+                        print("Esperando unos segundos para que se ejecute.")
+                        time.sleep(30)
                 else:
-                    print("Cancelado!")
+                    print("DEBUG - algo esta mal con la orden, no debio llegar aqui.")
+
+            else:
+                print("Cancelado!")
         else:
             print("ERROR: No tenes de esa moneda para cambiar, ratonazo!!")
+
+    input("-- ENTER para continuar --")
 
     opt = show_menu(api)
 

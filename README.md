@@ -55,7 +55,19 @@ EL SOFTWARE SE PROPORCIONA "COMO ESTA", SIN GARANTÍA DE NINGÚN TIPO, EXPRESA O
 
 Es necesario tener la clave privada de Bitso y de TAAPI para poder usarlo.
 
-Editar el codigo e ingresar las claves donde corresponde (Esta al principio del codigo)
+*Editar el codigo* e ingresar las claves donde corresponde. Archivo *"krono_bot_config.py"*
+
+## Screenshoot 
+
+Puede comprar y vender mucho mas rápido que la web o la app 
+
+![Screenshoot 1](screenshoot_1.jpg)
+
+![Screenshoot 2](screenshoot_2.jpg)
+
+Permite calcular indicadores económicos al instante.
+
+![Screenshoot 3](screenshoot_3.jpg)
 
 ## API
 

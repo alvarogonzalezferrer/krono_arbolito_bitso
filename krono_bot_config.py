@@ -1,0 +1,11 @@
+# Configuracion PRIVADA de las claves de Bitso y la API
+
+# RECORDAR PONER AQUI TUS CLAVES PRIVADAS PARA QUE EL SISTEMA FUNCIONE!!
+
+# https://bitso.com/
+BITSO_API_KEY = 'YOUR KEY'
+BITSO_API_SECRET = 'YOUR SECRET'
+
+# https://taapi.io/
+TAAPI_SECRET = 'YOUR TAAPI SECRET'
+
