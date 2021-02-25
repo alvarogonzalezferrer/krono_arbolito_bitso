@@ -378,10 +378,11 @@ while not opt == '0':
             else:
                 cantidad = round(cantidad, 2) # hacia fiat usd / ars
 
-            print("Cantidad a cambiar: ", cantidad)
-            s = input("Es correcto? S / N").lower().strip()[0]
-
             cantidad = Decimal(cantidad) # conversion importante para usarlo mas abajo
+
+            print("Cantidad a cambiar: ", cantidad)
+
+            s = input("Es correcto? S / N").lower().strip()[0]
 
             if s == 's':
                 # tomar ordenes altas y bajas
