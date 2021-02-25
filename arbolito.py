@@ -1,10 +1,8 @@
 # ------------------------------------------------------------
-# Arbolito digital
-#
-# v 0.19.02.2021
+# Arbolito digital Bitso
 # ------------------------------------------------------------
 # Permite convertir facilmente entre monedas, poner ordenes, etc
-# Sirve para el exchange Bitso
+# Sirve para el exchange Bitso, es una navaja suiza de crypto
 # ------------------------------------------------------------
 # Alvaro "Krono" - Febrero 2021 - Desde el exilio en Costa Rica
 # En memoria de mi querido padre
@@ -21,10 +19,14 @@
 # https://taapi.io/documentation/integration/direct/
 # https://taapi.io/
 #
+# API de Crito Ya para dolar en Argentina, etc
+#
+# https://criptoya.com/api/
+#
 # ------------------------------------------------------------
 # Librerias
 #
-# Necesita Python 3.9.x y las librerias:
+# Necesita Python 3.9.x y las librerías:
 #
 # https://github.com/bitsoex/bitso-py
 #
@@ -33,6 +35,7 @@
 # Instalar dependencias con (linea de comandos)
 #
 # pip install bitso-py
+# pip install requests
 #
 # ------------------------------------------------------------
 # MIT License
@@ -62,14 +65,14 @@ from decimal import Decimal  # para los calculos
 
 import bitso  # bitso api
 import time  # temporizaciones
-import requests  # para la api de indicadores
+import requests  # para la api de indicadores, REST API JSON
 
 # ----------
 import krono_bot_config  # configuración de cuenta
 
 # -- globales
 
-VERSION = "0.19.02.2021" # TODO cambiar esta version en cada revision
+VERSION = "0.25.02.2021"  # TODO cambiar esta version en cada revision
 
 # balances de dinero disponible
 usd_total = 0
@@ -156,6 +159,12 @@ def mostrar_ordenes(api, book_use):
                   "Cant {:.9f}".format(oo_i.original_amount), "= $ {:.2f}".format(oo_i.price * oo_i.original_amount))
     return len(oo)
 
+# muestra el dolar en Argentina , con la API de Cripto YA
+# https://criptoya.com/api/
+def show_dolar():
+    dolar = requests.get("https://criptoya.com/api/dolar")
+    print("Dolar en Argentina:", dolar.json())
+
 
 # muestra balances y cotizaciones, y ademas las pone globales
 def show_balance(api):
@@ -180,7 +189,7 @@ def show_balance(api):
     print("Total", balances.ars.name, "{:.2f}".format(balances.ars.total), "|", balances.usd.name,
           "{:.2f}".format(balances.usd.total), "|", balances.btc.name, "{:.9f}".format(balances.btc.total))
 
-    # precio inicial de referencia
+    # precio btc de referencia y riqueza total
     try:
         tick_usd = api.ticker('btc_usd')
     except Exception as e:
@@ -211,10 +220,10 @@ def show_balance(api):
 
     wealth_ars = round(ars_total + usd_blue * usd_total + btc_total * btc_price_ars, 2)
 
-    print("! Precio BTC/USD ${:.2f}".format(tick_usd.last), "| BTC/ARS ${:.2f}".format(tick_ars.last),
-          "| DolarBTC = ARS ", usd_blue)
-
     print("** RIQUEZA TOTAL APROXIMADA USD ", wealth_usd, "| ARS", wealth_ars)
+
+    print("\n!! Precio BTC/USD ${:.2f}".format(tick_usd.last), "| BTC/ARS ${:.2f}".format(tick_ars.last), "| DolarBTC = ARS ", usd_blue)
+
 
 # menu principal
 def show_menu(api):
@@ -237,7 +246,11 @@ def show_menu(api):
     ultimos_precios(api, 'btc_ars')
 
     print("---------------------------------------\n")
-    print("Pasar de:")
+
+    show_dolar()
+
+    print("---------------------------------------\n")
+    print("Opciones:")
     print("1) ARS > USD  | ARS$", usd_blue, " MAX U$S", round(ars_total / usd_blue, 2))
     print("2) ARS > BTC  | ARS$", btc_price_ars, " MAX btc {:.08f}".format(round(ars_total / btc_price_ars, 8)))
     print("3) USD > BTC  | USD$", btc_price_usd, " MAX btc {:.08f}".format(round(usd_total / btc_price_usd, 8)))
@@ -247,6 +260,8 @@ def show_menu(api):
     print("7) Cancelar ordenes pendientes.")
     print("8) Meter orden a mano")
     print("9) Ver indicadores economicos")
+
+    print("r) Refrescar datos")
 
     print("\n0) Salir")
 
@@ -302,6 +317,7 @@ while not opt == '0':
         print("USD > ARS (estas loco?)")
         print("ERROR: No implementado. Por ahora pasa de USD a BTC y de BTC a ARS...")
     elif opt == '7':  # cancelar ordenes
+        # TODO falta confirmar antes de cancelar !
         # liquidar ordenes pendientes
         print(borrar_ordenes(api, 'btc_usd'), " ordenes USD pendientes canceladas.")
         print(borrar_ordenes(api, 'btc_ars'), " ordenes ARS pendientes canceladas.\n")
@@ -311,7 +327,8 @@ while not opt == '0':
     elif opt == '9':
         # TODO DEBUG MEJORAR INDICADORES
         # TODO preguntar si quiere minuto, hora, diario, etc
-        # TODO por ahora no sirven para nada
+        # TODO evaluar el significado humano de cada indicador (compra / venta)
+
         print ("-- Indicadores --")
 
         print("Intervalo:", taapi_parameters['interval'])
@@ -326,8 +343,13 @@ while not opt == '0':
         print ('\n\n')
 
         # TODO DEBUG DEBERIA IDENTIFICAR TENDENCIAS BAJISTAS O ALZA Y ACTUAR EN CONSECUENCIA // MUY IMPOSIBLE REALMENTE CON ALGO COMO BTC
+
+    elif opt == 'r':
+        # refrescar
+        print("Refrescar datos. Presione ENTER")
+
     else:
-        print("Opcion no valida!")
+        print("Opción no valida!")
 
     if ok_trade:
         if not cant_exchange_max == 0:
@@ -347,7 +369,7 @@ while not opt == '0':
                     print("Error, no puede ser tan bajo. %", porcentaje)
                     ok_trade = False
                 else:
-                    cantidad = cant_exchange_max * porcentaje / Decimal(100.0)
+                    cantidad = cant_exchange_max * Decimal(porcentaje) / Decimal(100.0)
             else:
                 cantidad = float(leer.replace("$", ""))
 
@@ -434,7 +456,7 @@ while not opt == '0':
             else:
                 print("Cancelado!")
         else:
-            print("ERROR: No tenes de esa moneda para cambiar, ratonazo!!")
+            print("ERROR: No tenes de esa moneda para cambiar, ratonazo!!")  # es un barats
 
     input("-- ENTER para continuar --")
 
