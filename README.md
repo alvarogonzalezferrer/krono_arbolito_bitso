@@ -99,8 +99,9 @@ https://packaging.python.org/tutorials/installing-packages/
 
 Instalar dependencias con (linea de comandos)
 
-*pip install bitso-py*
-*pip install requests*
+    pip install bitso-py
+
+    pip install requests
 
 ## Funcionalidad deseada a futuro:
 
