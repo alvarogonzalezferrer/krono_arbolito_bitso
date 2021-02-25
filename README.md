@@ -53,13 +53,13 @@ EL SOFTWARE SE PROPORCIONA "COMO ESTA", SIN GARANTÍA DE NINGÚN TIPO, EXPRESA O
 
 ## Como usarlo
 
-Es necesario tener la clave privada de Bitso y de TAAPI para poder usarlo.
+Es **necesario** tener la clave privada de Bitso, y de TAAPI para poder usarlo.
 
 *Editar el codigo* e ingresar las claves donde corresponde. Archivo *"krono_bot_config.py"*
 
-## Screenshoot 
+## Screenshoot
 
-Puede comprar y vender mucho mas rápido que la web o la app 
+Puede comprar y vender mucho mas rápido que la web o la app
 
 ![Screenshoot 1](screenshoot_1.jpg)
 
@@ -85,6 +85,10 @@ https://taapi.io/documentation/integration/direct/
 
 https://taapi.io/
 
+### API para obtener las cotizaciones del dolar en Argentina
+
+https://criptoya.com/api/
+
 ## Librerias
 
 Necesita **Python 3.9.x** y las librerias:
@@ -96,3 +100,18 @@ https://packaging.python.org/tutorials/installing-packages/
 Instalar dependencias con (linea de comandos)
 
 *pip install bitso-py*
+*pip install requests*
+
+## Funcionalidad deseada a futuro:
+
+Esta funcionalidad la tengo en otros programas separados, la idea seria integrar todo en este.
+
+* Cancelar ventas
+* Cancelar compras
+* Cancelar todo -- ya funciona
+* Orden de compra manual
+* Orden de venta manual
+* Tomar ganancias
+* Poner stop loss
+* Comprar a la baja
+* Bot compra barato vende caro - scalping
